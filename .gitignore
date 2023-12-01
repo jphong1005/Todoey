@@ -91,3 +91,5 @@ iOSInjectionProject/
 
 # ETC.
 **/.DS_Store
+Pods/
+Spotify/Podfile.lock
