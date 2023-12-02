@@ -10,8 +10,9 @@ import UIKit
 class ViewController: UITableViewController {
 
     // MARK: - Stored-Prop
-    let array: [String] = ["Item 1", "Item 2", "Item 3"]
+    var array: [String] = ["Item 1", "Item 2", "Item 3"]
     
+    // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -19,14 +20,50 @@ class ViewController: UITableViewController {
         self.tableView.delegate = self
         self.tableView.dataSource = self
         
-        defaultConfigure()
+        configureViewController()
     }
     
-    private func defaultConfigure() -> Void {
+    private func configureViewController() -> Void {
         
         self.view.backgroundColor = .systemBackground
         
+        navigationItem.title = "Todoey"
+        navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .add, primaryAction: UIAction(handler: { [weak self] _ in
+            self?.addButtonPressed()
+        }))
+        navigationItem.rightBarButtonItem?.tintColor = .label
+        
+        if #available(iOS 15.0, *) {
+            let appearance: UINavigationBarAppearance = UINavigationBarAppearance()
+            
+            appearance.configureWithDefaultBackground()
+            appearance.backgroundColor = .systemYellow
+            
+            navigationItem.standardAppearance = appearance
+            navigationItem.scrollEdgeAppearance = appearance
+        }
+        
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+    }
+    
+    // MARK: - Event Handler
+    @objc private func addButtonPressed() -> Void {
+        
+        var textField: UITextField = UITextField()
+        let alert: UIAlertController = UIAlertController(title: "New Item", message: "Add New Todoey Item", preferredStyle: .alert)
+        
+        alert.addAction(UIAlertAction(title: "Add Item", style: .default, handler: { action in
+            self.array.append(textField.text ?? "New Item")
+            self.tableView.reloadData()
+        }))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        alert.addTextField { alertTextField in
+            alertTextField.placeholder = "Create New Item"
+            textField = alertTextField
+        }
+        
+        present(alert, animated: true)
     }
 
 
@@ -81,7 +118,9 @@ struct ViewControllerRepresentable: UIViewControllerRepresentable {
         ViewController()
     }
     
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
+        
+    }
 }
 
 struct ViewControllerRepresentable_PreviewProvider: PreviewProvider {
