@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class ViewController: UITableViewController {
 
@@ -25,8 +26,10 @@ class ViewController: UITableViewController {
     
     private func configureViewController() -> Void {
         
+        /// Background
         self.view.backgroundColor = .systemBackground
         
+        /// Navigation Bar
         navigationItem.title = "Todoey"
         navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .add, primaryAction: UIAction(handler: { [weak self] _ in
             self?.addButtonPressed()
@@ -107,8 +110,6 @@ extension ViewController {
 
 // MARK: - Live Preview
 #if DEBUG
-import SwiftUI
-
 struct ViewControllerRepresentable: UIViewControllerRepresentable {
     
     // MARK: - UIViewControllerRepresentable - Methods
