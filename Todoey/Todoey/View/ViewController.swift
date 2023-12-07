@@ -7,21 +7,26 @@
 
 import UIKit
 import SwiftUI
+import CoreData
 
 class ViewController: UITableViewController {
 
-    // MARK: - Stored-Prop
-    var array: [String] = ["Item 1", "Item 2", "Item 3"]
+    // MARK: - Stored-Props
+    var items: Array<Item> = Array<Item>()
+    let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
+        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
+        
         self.tableView.delegate = self
         self.tableView.dataSource = self
         
         configureViewController()
+        loadItems()
     }
     
     private func configureViewController() -> Void {
@@ -52,12 +57,20 @@ class ViewController: UITableViewController {
     // MARK: - Event Handler
     @objc private func addButtonPressed() -> Void {
         
-        var textField: UITextField = UITextField()
+        var textField: UITextField?
         let alert: UIAlertController = UIAlertController(title: "New Item", message: "Add New Todoey Item", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Add Item", style: .default, handler: { action in
-            self.array.append(textField.text ?? "New Item")
-            self.tableView.reloadData()
+            let newItem: Item = Item(context: self.context)
+            
+            guard let text: String = textField?.text else { return }
+            
+            newItem.title = text
+            newItem.done = false
+            
+            self.items.append(newItem)
+            
+            self.saveItems()
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         
@@ -67,6 +80,32 @@ class ViewController: UITableViewController {
         }
         
         present(alert, animated: true)
+    }
+    
+    // MARK: - Model Manipulation Methods (CRUD)
+    
+    //  CREATE
+    func saveItems() -> Void {
+        
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context: \(error.localizedDescription)")
+        }
+        
+        self.tableView.reloadData()
+    }
+    
+    //  READ
+    func loadItems() -> Void {
+        
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        
+        do {
+            items = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error.localizedDescription)")
+        }
     }
 
 
@@ -89,7 +128,7 @@ extension ViewController {
     // MARK: - UITableViewDataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return array.count
+        return items.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -99,7 +138,7 @@ extension ViewController {
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
             
-            content.text = array[indexPath.row]
+            content.text = items[indexPath.row].title
             
             cell.contentConfiguration = content
         }

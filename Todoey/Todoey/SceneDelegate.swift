@@ -77,6 +77,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         /// Scene이 Background로 전환될 때 호출
         
         print("SceneDelegate: UI Lifecycle - sceneDidEnterBackground")
+        
+        // Save changes in the application's managed object context when the application transitions to the background.
+        (UIApplication.shared.delegate as? AppDelegate)?.saveContext()
     }
 
 
