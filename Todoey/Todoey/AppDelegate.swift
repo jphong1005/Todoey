@@ -32,7 +32,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         /// App이 실행되고 초기 설정이 완료된 후 호출
         /// 이 시점에서 App이 화면에 나타나기 직전 단계
         print("AppDelegate: Process Lifecycle - didFinishLaunchingWithOptions")
-        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last ?? "")
+//        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last ?? "")
         
         return true
     }

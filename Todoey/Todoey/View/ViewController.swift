@@ -83,8 +83,7 @@ class ViewController: UITableViewController {
     }
     
     // MARK: - Model Manipulation Methods (CRUD)
-    
-    //  CREATE
+    /// `CREATE`
     func saveItems() -> Void {
         
         do {
@@ -96,7 +95,7 @@ class ViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    //  READ
+    /// `READ`
     func loadItems() -> Void {
         
         let request: NSFetchRequest<Item> = Item.fetchRequest()
@@ -107,21 +106,42 @@ class ViewController: UITableViewController {
             print("Error fetching data from context: \(error.localizedDescription)")
         }
     }
+    
+    /// `UPDATE`
+    func updateItem(items: Array<Item>, indexPath: IndexPath) -> Void {
+        
+        items[indexPath.row].done = !items[indexPath.row].done
+    }
+    
+    /// `DELETE`
+    func deleteItem(items: Array<Item>, indexPath: IndexPath) -> Void {
+        
+        context.delete(items[indexPath.row])
+        self.items.remove(at: indexPath.row)
+    }
 
 
 }
 
+// MARK: - Extension ViewController
 extension ViewController {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        tableView.deselectRow(at: indexPath, animated: true)
+        updateItem(items: items, indexPath: indexPath)
+        saveItems()
         
-        if (tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark) {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        } else {
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        
+        if (editingStyle == .delete) {
+            deleteItem(items: items, indexPath: indexPath)
+            tableView.deleteRows(at: [indexPath], with: .fade)
+            
+            saveItems()
         }
     }
     
@@ -141,6 +161,7 @@ extension ViewController {
             content.text = items[indexPath.row].title
             
             cell.contentConfiguration = content
+            cell.accessoryType = items[indexPath.row].done ? .checkmark : .none
         }
         
         return cell
