@@ -15,6 +15,9 @@ class ViewController: UITableViewController {
     var items: Array<Item> = Array<Item>()
     let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    // MARK: - View
+    let searchController: UISearchController = UISearchController(searchResultsController: nil)
+    
     // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,6 +27,7 @@ class ViewController: UITableViewController {
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
+        self.searchController.searchBar.delegate = self
         
         configureViewController()
         loadItems()
@@ -51,6 +55,10 @@ class ViewController: UITableViewController {
             navigationItem.scrollEdgeAppearance = appearance
         }
         
+        /// Search Bar
+        self.tableView.tableHeaderView = searchController.searchBar
+        
+        /// Table View
         self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
     }
     
@@ -84,7 +92,7 @@ class ViewController: UITableViewController {
     
     // MARK: - Model Manipulation Methods (CRUD)
     /// `CREATE`
-    func saveItems() -> Void {
+    private func saveItems() -> Void {
         
         do {
             try context.save()
@@ -96,25 +104,25 @@ class ViewController: UITableViewController {
     }
     
     /// `READ`
-    func loadItems() -> Void {
-        
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+    private func loadItems(parameter request: NSFetchRequest<Item> = Item.fetchRequest()) -> Void {
         
         do {
             items = try context.fetch(request)
         } catch {
             print("Error fetching data from context: \(error.localizedDescription)")
         }
+        
+        self.tableView.reloadData()
     }
     
     /// `UPDATE`
-    func updateItem(items: Array<Item>, indexPath: IndexPath) -> Void {
+    private func updateItem(items: Array<Item>, indexPath: IndexPath) -> Void {
         
         items[indexPath.row].done = !items[indexPath.row].done
     }
     
     /// `DELETE`
-    func deleteItem(items: Array<Item>, indexPath: IndexPath) -> Void {
+    private func deleteItem(items: Array<Item>, indexPath: IndexPath) -> Void {
         
         context.delete(items[indexPath.row])
         self.items.remove(at: indexPath.row)
@@ -124,7 +132,7 @@ class ViewController: UITableViewController {
 }
 
 // MARK: - Extension ViewController
-extension ViewController {
+extension ViewController: UISearchBarDelegate {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -133,16 +141,6 @@ extension ViewController {
         saveItems()
         
         tableView.deselectRow(at: indexPath, animated: true)
-    }
-    
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        
-        if (editingStyle == .delete) {
-            deleteItem(items: items, indexPath: indexPath)
-            tableView.deleteRows(at: [indexPath], with: .fade)
-            
-            saveItems()
-        }
     }
     
     // MARK: - UITableViewDataSource
@@ -165,6 +163,33 @@ extension ViewController {
         }
         
         return cell
+    }
+    
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        
+        if (editingStyle == .delete) {
+            deleteItem(items: items, indexPath: indexPath)
+            tableView.deleteRows(at: [indexPath], with: .fade)
+            
+            saveItems()
+        }
+    }
+    
+    // MARK: - UISearchBarDelegate
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        guard let searchBarText: String = searchBar.text else { return }
+        
+        /// Request
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        
+        /// Predicate
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
+        
+        /// Sorting
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(parameter: request)
     }
 }
 
