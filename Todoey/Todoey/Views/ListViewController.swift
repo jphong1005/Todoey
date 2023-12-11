@@ -1,19 +1,28 @@
 //
-//  ViewController.swift
+//  ListViewController.swift
 //  Todoey
 //
-//  Created by 홍진표 on 12/1/23.
+//  Created by 홍진표 on 12/10/23.
 //
 
 import UIKit
 import SwiftUI
 import CoreData
 
-class ViewController: UITableViewController {
+final class ListViewController: UITableViewController {
 
     // MARK: - Stored-Props
+    private static let identifier: String = "TodoeyListCell"
+    
     var items: Array<Item> = Array<Item>()
     let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    
+    // MARK: - Computed-Prop
+    var selectedCategory: Category? {
+        didSet {
+            loadItems()
+        }
+    }
     
     // MARK: - View
     let searchController: UISearchController = UISearchController(searchResultsController: nil)
@@ -21,25 +30,23 @@ class ViewController: UITableViewController {
     // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view.
-        
-        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
+
+//        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
         self.searchController.searchBar.delegate = self
         
-        configureViewController()
-        loadItems()
+        configureListViewController()
     }
     
-    private func configureViewController() -> Void {
+    private func configureListViewController() -> Void {
         
         /// Background
         self.view.backgroundColor = .systemBackground
         
         /// Navigation Bar
-        navigationItem.title = "Todoey"
+        navigationItem.title = "Items"
         navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .add, primaryAction: UIAction(handler: { [weak self] _ in
             self?.addButtonPressed()
         }))
@@ -59,7 +66,7 @@ class ViewController: UITableViewController {
         self.tableView.tableHeaderView = searchController.searchBar
         
         /// Table View
-        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: ListViewController.identifier)
     }
     
     // MARK: - Event Handler
@@ -75,6 +82,7 @@ class ViewController: UITableViewController {
             
             newItem.title = text
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             
             self.items.append(newItem)
             
@@ -100,11 +108,21 @@ class ViewController: UITableViewController {
             print("Error saving context: \(error.localizedDescription)")
         }
         
-        self.tableView.reloadData()
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
     }
     
     /// `READ`
-    private func loadItems(parameter request: NSFetchRequest<Item> = Item.fetchRequest()) -> Void {
+    private func loadItems(_ request: NSFetchRequest<Item> = Item.fetchRequest(), _ predicate: NSPredicate? = nil) -> Void {
+        
+        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory?.name ?? "")
+        
+        if let additionalPredicate: NSPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
         
         do {
             items = try context.fetch(request)
@@ -112,7 +130,9 @@ class ViewController: UITableViewController {
             print("Error fetching data from context: \(error.localizedDescription)")
         }
         
-        self.tableView.reloadData()
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
     }
     
     /// `UPDATE`
@@ -131,8 +151,8 @@ class ViewController: UITableViewController {
 
 }
 
-// MARK: - Extension ViewController
-extension ViewController: UISearchBarDelegate {
+// MARK: - Extension ListViewController
+extension ListViewController: UISearchBarDelegate {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -151,7 +171,7 @@ extension ViewController: UISearchBarDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: ListViewController.identifier, for: indexPath)
         
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
@@ -184,24 +204,35 @@ extension ViewController: UISearchBarDelegate {
         let request: NSFetchRequest<Item> = Item.fetchRequest()
         
         /// Predicate
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
+        let predicate: NSPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
         
         /// Sorting
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(parameter: request)
+        loadItems(request, predicate)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        if (searchBar.text?.count == 0) {
+            loadItems()
+            
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
     }
 }
 
 // MARK: - Live Preview
 #if DEBUG
-struct ViewControllerRepresentable: UIViewControllerRepresentable {
+struct ListViewControllerRepresentable: UIViewControllerRepresentable {
     
     // MARK: - UIViewControllerRepresentable - Methods
     @available(iOS 15.0, *)
     func makeUIViewController(context: Context) -> some UIViewController {
         
-        ViewController()
+        ListViewController()
     }
     
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
@@ -209,12 +240,12 @@ struct ViewControllerRepresentable: UIViewControllerRepresentable {
     }
 }
 
-struct ViewControllerRepresentable_PreviewProvider: PreviewProvider {
+struct ListViewControllerRepresentable_PreviewProvider: PreviewProvider {
     
     static var previews: some View {
         
         Group {
-            ViewControllerRepresentable()
+            ListViewControllerRepresentable()
                 .ignoresSafeArea()
                 .previewDisplayName("Preview")
                 .previewDevice(PreviewDevice(rawValue: "iPhone 15 Pro"))
@@ -223,4 +254,3 @@ struct ViewControllerRepresentable_PreviewProvider: PreviewProvider {
     }
 }
 #endif
-
