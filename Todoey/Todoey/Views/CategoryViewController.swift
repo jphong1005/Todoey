@@ -8,6 +8,7 @@
 import UIKit
 import SwiftUI
 import CoreData
+import SwipeCellKit
 
 final class CategoryViewController: UITableViewController {
 
@@ -53,7 +54,8 @@ final class CategoryViewController: UITableViewController {
         }
         
         /// Table View
-        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: CategoryViewController.identifier)
+        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: CategoryViewController.identifier)
+        self.tableView.rowHeight = 80.0
     }
     
     // MARK: - Event Handler
@@ -111,13 +113,29 @@ final class CategoryViewController: UITableViewController {
             self.tableView.reloadData()
         }
     }
+    
+    /// `DELETE`
+    private func deleteCategory(categories: Array<Category>, indexPath: IndexPath) -> Void {
+        
+        guard let items: NSSet = categories[indexPath.row].items else { return }
+        
+        /// 해당 카테고리의 모든 List item 삭제
+        for item in items {
+            context.delete(item as! NSManagedObject)
+        }
+        
+        context.delete(categories[indexPath.row])
+        self.categories.remove(at: indexPath.row)
+        
+        saveCategory()
+    }
 
 }
 
 // MARK: - Extension CategoryViewController
-extension CategoryViewController {
+extension CategoryViewController: SwipeTableViewCellDelegate {
     
-    // MARK: - Extension ListViewController
+    // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         self.tableView.deselectRow(at: indexPath, animated: true)
@@ -137,7 +155,9 @@ extension CategoryViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: CategoryViewController.identifier, for: indexPath)
+        guard let cell: SwipeTableViewCell = tableView.dequeueReusableCell(withIdentifier: CategoryViewController.identifier, for: indexPath) as? SwipeTableViewCell else { return UITableViewCell() }
+        
+        cell.delegate = self
         
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
@@ -148,6 +168,33 @@ extension CategoryViewController {
         }
         
         return cell
+    }
+    
+    // MARK: - SwipeTableViewCellDelegate
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        
+        guard orientation == .right else { return nil }
+        
+        let deleteAction: SwipeAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            self.deleteCategory(categories: self.categories, indexPath: indexPath)
+            
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+        
+        deleteAction.image = UIImage(named: "delete-icon")
+        
+        return [deleteAction]
+    }
+    
+    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
+        
+        var options: SwipeTableOptions = SwipeTableOptions()
+        
+        options.expansionStyle = .destructive
+        
+        return options
     }
 }
 
