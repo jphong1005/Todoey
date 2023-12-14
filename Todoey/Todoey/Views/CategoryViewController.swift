@@ -9,12 +9,11 @@ import UIKit
 import SwiftUI
 import CoreData
 import SwipeCellKit
+import ChameleonFramework
 
-final class CategoryViewController: UITableViewController {
+final class CategoryViewController: SwipeTableViewController, SwipeTableViewControllerDelegate {
 
     // MARK: - Stored-Props
-    private static let identifier: String = "TodoeyCategoryCell"
-    
     var categories: Array<Category> = Array<Category>()
     let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
@@ -26,6 +25,8 @@ final class CategoryViewController: UITableViewController {
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
+        
+        self.delegate = self
         
         configureCategoryViewController()
         loadCategories()
@@ -43,6 +44,8 @@ final class CategoryViewController: UITableViewController {
         }))
         navigationItem.rightBarButtonItem?.tintColor = .label
         
+        navigationController?.navigationBar.prefersLargeTitles = true
+        
         if #available(iOS 15.0, *) {
             let appearance: UINavigationBarAppearance = UINavigationBarAppearance()
             
@@ -53,9 +56,9 @@ final class CategoryViewController: UITableViewController {
             navigationItem.scrollEdgeAppearance = appearance
         }
         
-        /// Table View
-        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: CategoryViewController.identifier)
-        self.tableView.rowHeight = 80.0
+        /// TableView
+        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: SwipeTableViewController.identifier)
+        self.tableView.separatorStyle = .none
     }
     
     // MARK: - Event Handler
@@ -70,6 +73,7 @@ final class CategoryViewController: UITableViewController {
             guard let text: String = textField?.text else { return }
             
             newCategory.name = text
+            newCategory.colour = UIColor.randomFlat().hexValue()
             
             self.categories.append(newCategory)
             
@@ -114,14 +118,16 @@ final class CategoryViewController: UITableViewController {
         }
     }
     
-    /// `DELETE`
-    private func deleteCategory(categories: Array<Category>, indexPath: IndexPath) -> Void {
+    /// `DELETE - (SwipeTableViewControllerDelegate) Implementation`
+    func delete(at indexPath: IndexPath) -> Void {
         
         guard let items: NSSet = categories[indexPath.row].items else { return }
         
-        /// 해당 카테고리의 모든 List item 삭제
-        for item in items {
-            context.delete(item as! NSManagedObject)
+        /// 해당 카테고리의 모든 아이템 삭제
+        items.forEach { item in
+            guard let item: NSManagedObject = item as? NSManagedObject else { return }
+            
+            context.delete(item)
         }
         
         context.delete(categories[indexPath.row])
@@ -133,7 +139,7 @@ final class CategoryViewController: UITableViewController {
 }
 
 // MARK: - Extension CategoryViewController
-extension CategoryViewController: SwipeTableViewCellDelegate {
+extension CategoryViewController  {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -155,9 +161,7 @@ extension CategoryViewController: SwipeTableViewCellDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        guard let cell: SwipeTableViewCell = tableView.dequeueReusableCell(withIdentifier: CategoryViewController.identifier, for: indexPath) as? SwipeTableViewCell else { return UITableViewCell() }
-        
-        cell.delegate = self
+        let cell: UITableViewCell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
@@ -165,36 +169,10 @@ extension CategoryViewController: SwipeTableViewCellDelegate {
             content.text = categories[indexPath.row].name
             
             cell.contentConfiguration = content
+            cell.backgroundColor = UIColor(hexString: categories[indexPath.row].colour ?? "FFCC00")
         }
         
         return cell
-    }
-    
-    // MARK: - SwipeTableViewCellDelegate
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        
-        guard orientation == .right else { return nil }
-        
-        let deleteAction: SwipeAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
-            self.deleteCategory(categories: self.categories, indexPath: indexPath)
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-        
-        deleteAction.image = UIImage(named: "delete-icon")
-        
-        return [deleteAction]
-    }
-    
-    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
-        
-        var options: SwipeTableOptions = SwipeTableOptions()
-        
-        options.expansionStyle = .destructive
-        
-        return options
     }
 }
 

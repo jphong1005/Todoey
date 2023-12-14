@@ -8,12 +8,12 @@
 import UIKit
 import SwiftUI
 import CoreData
+import SwipeCellKit
+import ChameleonFramework
 
-final class ListViewController: UITableViewController {
+final class ListViewController: SwipeTableViewController, SwipeTableViewControllerDelegate {
 
     // MARK: - Stored-Props
-    private static let identifier: String = "TodoeyListCell"
-    
     var items: Array<Item> = Array<Item>()
     let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
@@ -30,43 +30,52 @@ final class ListViewController: UITableViewController {
     // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
-
-//        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
+        
         self.searchController.searchBar.delegate = self
+        
+        self.delegate = self
         
         configureListViewController()
     }
     
     private func configureListViewController() -> Void {
         
+        guard let colour: UIColor = UIColor(hexString: selectedCategory?.colour ?? "FFCC00") else { return }
+        
         /// Background
         self.view.backgroundColor = .systemBackground
         
         /// Navigation Bar
-        navigationItem.title = "Items"
+        navigationItem.title = selectedCategory?.name
         navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .add, primaryAction: UIAction(handler: { [weak self] _ in
             self?.addButtonPressed()
         }))
         navigationItem.rightBarButtonItem?.tintColor = .label
         
+        navigationController?.navigationBar.prefersLargeTitles = true
+        
         if #available(iOS 15.0, *) {
             let appearance: UINavigationBarAppearance = UINavigationBarAppearance()
             
             appearance.configureWithDefaultBackground()
-            appearance.backgroundColor = .systemYellow
+            appearance.backgroundColor = colour
             
             navigationItem.standardAppearance = appearance
             navigationItem.scrollEdgeAppearance = appearance
+            
+            self.navigationController?.navigationBar.tintColor = .label
         }
         
         /// Search Bar
-        self.tableView.tableHeaderView = searchController.searchBar
+        searchController.searchBar.barTintColor = colour
         
-        /// Table View
-        self.tableView.register(UITableViewCell.self, forCellReuseIdentifier: ListViewController.identifier)
+        /// TableView
+        self.tableView.tableHeaderView = searchController.searchBar
+        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: SwipeTableViewController.identifier)
+        self.tableView.separatorStyle = .none
     }
     
     // MARK: - Event Handler
@@ -141,11 +150,13 @@ final class ListViewController: UITableViewController {
         items[indexPath.row].done = !items[indexPath.row].done
     }
     
-    /// `DELETE`
-    private func deleteItem(items: Array<Item>, indexPath: IndexPath) -> Void {
+    /// `DELETE - (SwipeTableViewControllerDelegate) Implementation`
+    func delete(at indexPath: IndexPath) -> Void {
         
         context.delete(items[indexPath.row])
         self.items.remove(at: indexPath.row)
+        
+        saveItems()
     }
 
 
@@ -171,13 +182,16 @@ extension ListViewController: UISearchBarDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: ListViewController.identifier, for: indexPath)
+        let cell: UITableViewCell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
+            guard let colour: UIColor = UIColor(hexString: selectedCategory?.colour ?? "FFCC00")?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(items.count)) else { return cell }
             
             content.text = items[indexPath.row].title
+            content.textProperties.color = ContrastColorOf(colour, returnFlat: true)
             
+            cell.backgroundColor = colour
             cell.contentConfiguration = content
             cell.accessoryType = items[indexPath.row].done ? .checkmark : .none
         }
@@ -188,10 +202,8 @@ extension ListViewController: UISearchBarDelegate {
     override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         
         if (editingStyle == .delete) {
-            deleteItem(items: items, indexPath: indexPath)
+            delete(at: indexPath)
             tableView.deleteRows(at: [indexPath], with: .fade)
-            
-            saveItems()
         }
     }
     
