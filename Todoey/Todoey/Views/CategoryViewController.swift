@@ -14,13 +14,13 @@ import ChameleonFramework
 final class CategoryViewController: SwipeTableViewController, SwipeTableViewControllerDelegate {
 
     // MARK: - Stored-Props
-    var categories: Array<Category> = Array<Category>()
-    let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    private var categories: Array<Category> = Array<Category>()
+    private let context: NSManagedObjectContext = CoreDataManager.shared.context
     
     // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
         
         self.tableView.delegate = self
@@ -57,7 +57,7 @@ final class CategoryViewController: SwipeTableViewController, SwipeTableViewCont
         }
         
         /// TableView
-        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: SwipeTableViewController.identifier)
+        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: SwipeTableViewController.swipeTableViewCell_Identifier)
         self.tableView.separatorStyle = .none
     }
     
@@ -88,7 +88,7 @@ final class CategoryViewController: SwipeTableViewController, SwipeTableViewCont
         
         present(alert, animated: true)
     }
-
+    
     // MARK: - Model Manipulation Methods (CRUD)
     /// `CREATE`
     private func saveCategory() -> Void {
@@ -121,25 +121,21 @@ final class CategoryViewController: SwipeTableViewController, SwipeTableViewCont
     /// `DELETE - (SwipeTableViewControllerDelegate) Implementation`
     func delete(at indexPath: IndexPath) -> Void {
         
-        guard let items: NSSet = categories[indexPath.row].items else { return }
+        guard let items = categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
         
         /// 해당 카테고리의 모든 아이템 삭제
-        items.forEach { item in
-            guard let item: NSManagedObject = item as? NSManagedObject else { return }
-            
-            context.delete(item)
-        }
+        items.forEach { context.delete($0) }
         
         context.delete(categories[indexPath.row])
         self.categories.remove(at: indexPath.row)
         
         saveCategory()
     }
-
+    
 }
 
 // MARK: - Extension CategoryViewController
-extension CategoryViewController  {
+extension CategoryViewController {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -187,9 +183,7 @@ struct CategoryViewControllerRepresentable: UIViewControllerRepresentable {
         CategoryViewController()
     }
     
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
-        
-    }
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {}
 }
 
 struct CategoryViewControllerRepresentable_PreviewProvider: PreviewProvider {

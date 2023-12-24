@@ -16,6 +16,7 @@
 		E82D32412B246580009A7F61 /* CategoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82D32402B246580009A7F61 /* CategoryViewController.swift */; };
 		E82E84162B2088A8003F17F3 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = E82E84142B2088A8003F17F3 /* DataModel.xcdatamodeld */; };
 		E88194A22B298DAD00784349 /* SwipeTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88194A12B298DAD00784349 /* SwipeTableViewController.swift */; };
+		E8A58A5D2B301E4400155B79 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A58A5C2B301E4400155B79 /* CoreDataManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		E82D32402B246580009A7F61 /* CategoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryViewController.swift; sourceTree = "<group>"; };
 		E82E84152B2088A8003F17F3 /* DataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DataModel.xcdatamodel; sourceTree = "<group>"; };
 		E88194A12B298DAD00784349 /* SwipeTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeTableViewController.swift; sourceTree = "<group>"; };
+		E8A58A5C2B301E4400155B79 /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
 		FE9FCBCE164E76A3A9285262 /* Pods_Todoey.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Todoey.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -88,6 +90,7 @@
 				E8088E792B19B99300E5F7B9 /* SceneDelegate.swift */,
 				E82E84122B208828003F17F3 /* Model */,
 				E82E84132B208837003F17F3 /* Views */,
+				E8A58A5B2B301E2900155B79 /* Manager */,
 				E8088E802B19B99400E5F7B9 /* Assets.xcassets */,
 				E8088E822B19B99400E5F7B9 /* LaunchScreen.storyboard */,
 				E8088E852B19B99400E5F7B9 /* Info.plist */,
@@ -106,11 +109,19 @@
 		E82E84132B208837003F17F3 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E88194A12B298DAD00784349 /* SwipeTableViewController.swift */,
 				E82D32402B246580009A7F61 /* CategoryViewController.swift */,
 				E8088E7B2B19B99300E5F7B9 /* ListViewController.swift */,
-				E88194A12B298DAD00784349 /* SwipeTableViewController.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		E8A58A5B2B301E2900155B79 /* Manager */ = {
+			isa = PBXGroup;
+			children = (
+				E8A58A5C2B301E4400155B79 /* CoreDataManager.swift */,
+			);
+			path = Manager;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -232,6 +243,7 @@
 				E82E84162B2088A8003F17F3 /* DataModel.xcdatamodeld in Sources */,
 				E8088E782B19B99300E5F7B9 /* AppDelegate.swift in Sources */,
 				E88194A22B298DAD00784349 /* SwipeTableViewController.swift in Sources */,
+				E8A58A5D2B301E4400155B79 /* CoreDataManager.swift in Sources */,
 				E8088E7A2B19B99300E5F7B9 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

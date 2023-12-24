@@ -8,6 +8,7 @@
 import UIKit
 import SwiftUI
 import SwipeCellKit
+import CoreData
 
 protocol SwipeTableViewControllerDelegate: AnyObject {
     
@@ -16,12 +17,12 @@ protocol SwipeTableViewControllerDelegate: AnyObject {
 }
 
 class SwipeTableViewController: UITableViewController {
-
+    
     // MARK: - Stored-Props
-    static let identifier: String = "SwipeTableViewCell"
+    static let swipeTableViewCell_Identifier: String = "SwipeTableViewCell"
     weak var delegate: SwipeTableViewControllerDelegate? = nil
     
-    // MARK: - Methods
+    // MARK: - Method
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -36,7 +37,7 @@ extension SwipeTableViewController: SwipeTableViewCellDelegate {
     // MARK: - UITableViewDataSource
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        guard let cell: SwipeTableViewCell = tableView.dequeueReusableCell(withIdentifier: SwipeTableViewController.identifier, for: indexPath) as? SwipeTableViewCell else { return UITableViewCell() }
+        guard let cell: SwipeTableViewCell = tableView.dequeueReusableCell(withIdentifier: SwipeTableViewController.swipeTableViewCell_Identifier, for: indexPath) as? SwipeTableViewCell else { return UITableViewCell() }
         
         cell.delegate = self
         
@@ -82,9 +83,7 @@ struct SwipeTableViewControllerRepresentable: UIViewControllerRepresentable {
         SwipeTableViewController()
     }
     
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
-        
-    }
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {}
 }
 
 struct SwipeTableViewControllerRepresentable_PreviewProvider: PreviewProvider {

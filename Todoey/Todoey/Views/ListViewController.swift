@@ -12,12 +12,12 @@ import SwipeCellKit
 import ChameleonFramework
 
 final class ListViewController: SwipeTableViewController, SwipeTableViewControllerDelegate {
-
-    // MARK: - Stored-Props
-    var items: Array<Item> = Array<Item>()
-    let context: NSManagedObjectContext = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
-    // MARK: - Computed-Prop
+    // MARK: - Stored-Props
+    private var items: Array<Item> = Array<Item>()
+    private let context: NSManagedObjectContext = CoreDataManager.shared.context
+    
+    // MARK: - Property Observer
     var selectedCategory: Category? {
         didSet {
             loadItems()
@@ -33,7 +33,6 @@ final class ListViewController: SwipeTableViewController, SwipeTableViewControll
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
-        
         self.searchController.searchBar.delegate = self
         
         self.delegate = self
@@ -74,7 +73,7 @@ final class ListViewController: SwipeTableViewController, SwipeTableViewControll
         
         /// TableView
         self.tableView.tableHeaderView = searchController.searchBar
-        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: SwipeTableViewController.identifier)
+        self.tableView.register(SwipeTableViewCell.self, forCellReuseIdentifier: SwipeTableViewController.swipeTableViewCell_Identifier)
         self.tableView.separatorStyle = .none
     }
     
@@ -148,6 +147,8 @@ final class ListViewController: SwipeTableViewController, SwipeTableViewControll
     private func updateItem(items: Array<Item>, indexPath: IndexPath) -> Void {
         
         items[indexPath.row].done = !items[indexPath.row].done
+        
+        saveItems()
     }
     
     /// `DELETE - (SwipeTableViewControllerDelegate) Implementation`
@@ -168,10 +169,9 @@ extension ListViewController: UISearchBarDelegate {
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        updateItem(items: items, indexPath: indexPath)
-        saveItems()
-        
         tableView.deselectRow(at: indexPath, animated: true)
+        
+        updateItem(items: items, indexPath: indexPath)
     }
     
     // MARK: - UITableViewDataSource
@@ -227,6 +227,7 @@ extension ListViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
         if (searchBar.text?.count == 0) {
+            
             loadItems()
             
             DispatchQueue.main.async {
@@ -247,9 +248,7 @@ struct ListViewControllerRepresentable: UIViewControllerRepresentable {
         ListViewController()
     }
     
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
-        
-    }
+    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {}
 }
 
 struct ListViewControllerRepresentable_PreviewProvider: PreviewProvider {
