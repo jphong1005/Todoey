@@ -8,15 +8,25 @@
 import Foundation
 import CoreData
 
-final class CoreDataManager {
+protocol CoreDataManagerDelegate {
+    
+    // MARK: - Properties & Function Prototype
+    var context: NSManagedObjectContext { get }
+    var persistentContainer: NSPersistentContainer { get set }
+    
+    func saveContext() -> Void
+}
+
+// MARK: - Low-Level Module
+final class CoreDataManager: CoreDataManagerDelegate {
     
     // MARK: - Singleton Instance
     static let shared: CoreDataManager = CoreDataManager()
     
-    // MARK: - (PRIVATE) - Init
+    // MARK: - PRIVATE Init
     private init() {}
     
-    // MARK: - Computed-Prop
+    // MARK: - CoreDataManagerDelegate Implementation
     var context: NSManagedObjectContext {
         get {
             return persistentContainer.viewContext
@@ -70,6 +80,7 @@ final class CoreDataManager {
                 // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
                 let nserror: NSError = error as NSError
                 
+                print("Error saving context: \(error.localizedDescription)")
                 fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
             }
         }

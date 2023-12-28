@@ -10,17 +10,14 @@ import SwiftUI
 import SwipeCellKit
 import CoreData
 
-protocol SwipeTableViewControllerDelegate: AnyObject {
-    
-    // MARK: - Function-Prototype
-    func delete(at indexPath: IndexPath) -> Void
-}
-
 class SwipeTableViewController: UITableViewController {
     
-    // MARK: - Stored-Props
+    // MARK: - Properties
     static let swipeTableViewCell_Identifier: String = "SwipeTableViewCell"
-    weak var delegate: SwipeTableViewControllerDelegate? = nil
+    
+    /// `Dependency Injection`
+    let dataManager: DataManager = DataManager(coreDataManager: CoreDataManager.shared)
+    weak var delegate: DataManagerDelegate? = nil
     
     // MARK: - Method
     override func viewDidLoad() {
@@ -50,11 +47,7 @@ extension SwipeTableViewController: SwipeTableViewCellDelegate {
         guard orientation == .right else { return nil }
         
         let deleteAction: SwipeAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
-            self.delegate?.delete(at: indexPath)
-            
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
+            self.delegate?.delete?(at: indexPath)
         }
         
         deleteAction.image = UIImage(named: "delete-icon")

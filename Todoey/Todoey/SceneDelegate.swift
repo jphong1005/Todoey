@@ -10,6 +10,9 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    
+    // MARK: - Property
+    private let coreDataManager: CoreDataManager = CoreDataManager.shared
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -79,7 +82,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         print("SceneDelegate: UI Lifecycle - sceneDidEnterBackground")
         
         // Save changes in the application's managed object context when the application transitions to the background.
-        (UIApplication.shared.delegate as? AppDelegate)?.coreDataManager.saveContext()
+        coreDataManager.saveContext()
     }
 
 

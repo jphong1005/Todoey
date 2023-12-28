@@ -11,16 +11,14 @@ import CoreData
 import SwipeCellKit
 import ChameleonFramework
 
-final class ListViewController: SwipeTableViewController, SwipeTableViewControllerDelegate {
-    
-    // MARK: - Stored-Props
-    private var items: Array<Item> = Array<Item>()
-    private let context: NSManagedObjectContext = CoreDataManager.shared.context
-    
+final class ListViewController: SwipeTableViewController {
+
     // MARK: - Property Observer
     var selectedCategory: Category? {
         didSet {
-            loadItems()
+            loadItems {
+                self.tableView.reloadData()
+            }
         }
     }
     
@@ -84,7 +82,7 @@ final class ListViewController: SwipeTableViewController, SwipeTableViewControll
         let alert: UIAlertController = UIAlertController(title: "New Item", message: "Add New Todoey Item", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Add Item", style: .default, handler: { action in
-            let newItem: Item = Item(context: self.context)
+            let newItem: Item = Item(context: self.dataManager.coreDataManager.context)
             
             guard let text: String = textField?.text else { return }
             
@@ -92,9 +90,13 @@ final class ListViewController: SwipeTableViewController, SwipeTableViewControll
             newItem.done = false
             newItem.parentCategory = self.selectedCategory
             
-            self.items.append(newItem)
+            self.dataManager.items.append(newItem)
             
-            self.saveItems()
+            self.dataManager.save {
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         
@@ -105,79 +107,31 @@ final class ListViewController: SwipeTableViewController, SwipeTableViewControll
         
         present(alert, animated: true)
     }
-    
-    // MARK: - Model Manipulation Methods (CRUD)
-    /// `CREATE`
-    private func saveItems() -> Void {
-        
-        do {
-            try context.save()
-        } catch {
-            print("Error saving context: \(error.localizedDescription)")
-        }
-        
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
-    
-    /// `READ`
-    private func loadItems(_ request: NSFetchRequest<Item> = Item.fetchRequest(), _ predicate: NSPredicate? = nil) -> Void {
-        
-        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory?.name ?? "")
-        
-        if let additionalPredicate: NSPredicate = predicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
-        } else {
-            request.predicate = categoryPredicate
-        }
-        
-        do {
-            items = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error.localizedDescription)")
-        }
-        
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
-    
-    /// `UPDATE`
-    private func updateItem(items: Array<Item>, indexPath: IndexPath) -> Void {
-        
-        items[indexPath.row].done = !items[indexPath.row].done
-        
-        saveItems()
-    }
-    
-    /// `DELETE - (SwipeTableViewControllerDelegate) Implementation`
-    func delete(at indexPath: IndexPath) -> Void {
-        
-        context.delete(items[indexPath.row])
-        self.items.remove(at: indexPath.row)
-        
-        saveItems()
-    }
 
 
 }
 
 // MARK: - Extension ListViewController
-extension ListViewController: UISearchBarDelegate {
+extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         tableView.deselectRow(at: indexPath, animated: true)
         
-        updateItem(items: items, indexPath: indexPath)
+        self.dataManager.update(self.dataManager.items, at: indexPath) {
+            self.dataManager.save {
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
+        }
     }
     
     // MARK: - UITableViewDataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return items.count
+        return self.dataManager.items.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -186,14 +140,14 @@ extension ListViewController: UISearchBarDelegate {
         
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
-            guard let colour: UIColor = UIColor(hexString: selectedCategory?.colour ?? "FFCC00")?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(items.count)) else { return cell }
+            guard let colour: UIColor = UIColor(hexString: selectedCategory?.colour ?? "FFCC00")?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(self.dataManager.items.count)) else { return cell }
             
-            content.text = items[indexPath.row].title
+            content.text = self.dataManager.items[indexPath.row].title
             content.textProperties.color = ContrastColorOf(colour, returnFlat: true)
             
             cell.backgroundColor = colour
             cell.contentConfiguration = content
-            cell.accessoryType = items[indexPath.row].done ? .checkmark : .none
+            cell.accessoryType = self.dataManager.items[indexPath.row].done ? .checkmark : .none
         }
         
         return cell
@@ -203,6 +157,7 @@ extension ListViewController: UISearchBarDelegate {
         
         if (editingStyle == .delete) {
             delete(at: indexPath)
+            
             tableView.deleteRows(at: [indexPath], with: .fade)
         }
     }
@@ -221,20 +176,56 @@ extension ListViewController: UISearchBarDelegate {
         /// Sorting
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
-        loadItems(request, predicate)
+        loadItems(request, predicate) {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
         if (searchBar.text?.count == 0) {
-            
-            loadItems()
-            
-            DispatchQueue.main.async {
-                searchBar.resignFirstResponder()
+            loadItems {
+                DispatchQueue.main.async {
+                    searchBar.resignFirstResponder()
+                }
             }
         }
     }
+    
+    // MARK: - DataManagerDelegate
+    func loadItems(_ request: NSFetchRequest<Item> = Item.fetchRequest(), _ predicate: NSPredicate? = nil, completionHandler: @escaping () -> Void) {
+        
+        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory?.name ?? "")
+        
+        if let additionalPredicate: NSPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+        do {
+            self.dataManager.items = try self.dataManager.coreDataManager.context.fetch(request)
+        } catch {
+            print("Error fetching data from context: \(error.localizedDescription)")
+        }
+        
+        completionHandler()
+    }
+    
+    func delete(at indexPath: IndexPath) -> Void {
+        
+        self.dataManager.coreDataManager.context.delete(self.dataManager.items[indexPath.row])
+        self.dataManager.items.remove(at: indexPath.row)
+        
+        self.dataManager.save {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
+    }
+    
 }
 
 // MARK: - Live Preview

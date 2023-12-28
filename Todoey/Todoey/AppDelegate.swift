@@ -13,8 +13,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 
-    // MARK: - Stored-Prop
-    let coreDataManager: CoreDataManager = CoreDataManager.shared
     
     // MARK: - Process Lifecycle
     /// 프로세스 레벨 수준의 이벤트를 애플리케이션에 알림.

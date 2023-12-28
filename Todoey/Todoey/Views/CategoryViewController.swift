@@ -11,11 +11,7 @@ import CoreData
 import SwipeCellKit
 import ChameleonFramework
 
-final class CategoryViewController: SwipeTableViewController, SwipeTableViewControllerDelegate {
-
-    // MARK: - Stored-Props
-    private var categories: Array<Category> = Array<Category>()
-    private let context: NSManagedObjectContext = CoreDataManager.shared.context
+final class CategoryViewController: SwipeTableViewController {
     
     // MARK: - Methods
     override func viewDidLoad() {
@@ -29,7 +25,9 @@ final class CategoryViewController: SwipeTableViewController, SwipeTableViewCont
         self.delegate = self
         
         configureCategoryViewController()
-        loadCategories()
+        self.dataManager.loadCategories {
+            self.tableView.reloadData()
+        }
     }
     
     private func configureCategoryViewController() -> Void {
@@ -68,16 +66,20 @@ final class CategoryViewController: SwipeTableViewController, SwipeTableViewCont
         let alert: UIAlertController = UIAlertController(title: "New Category", message: "Add New Todoey Category", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Add Category", style: .default, handler: { action in
-            let newCategory: Category = Category(context: self.context)
+            let newCategory: Category = Category(context: self.dataManager.coreDataManager.context)
             
             guard let text: String = textField?.text else { return }
             
             newCategory.name = text
             newCategory.colour = UIColor.randomFlat().hexValue()
             
-            self.categories.append(newCategory)
+            self.dataManager.categories.append(newCategory)
             
-            self.saveCategory()
+            self.dataManager.save {
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
         }))
         alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
         
@@ -89,53 +91,10 @@ final class CategoryViewController: SwipeTableViewController, SwipeTableViewCont
         present(alert, animated: true)
     }
     
-    // MARK: - Model Manipulation Methods (CRUD)
-    /// `CREATE`
-    private func saveCategory() -> Void {
-        
-        do {
-            try context.save()
-        } catch {
-            print("Error saving context: \(error.localizedDescription)")
-        }
-        
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
-    
-    /// `READ`
-    private func loadCategories(parameter request: NSFetchRequest<Category> = Category.fetchRequest()) -> Void {
-        
-        do {
-            categories = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error.localizedDescription)")
-        }
-        
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
-    
-    /// `DELETE - (SwipeTableViewControllerDelegate) Implementation`
-    func delete(at indexPath: IndexPath) -> Void {
-        
-        guard let items = categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
-        
-        /// 해당 카테고리의 모든 아이템 삭제
-        items.forEach { context.delete($0) }
-        
-        context.delete(categories[indexPath.row])
-        self.categories.remove(at: indexPath.row)
-        
-        saveCategory()
-    }
-    
 }
 
 // MARK: - Extension CategoryViewController
-extension CategoryViewController {
+extension CategoryViewController: DataManagerDelegate {
     
     // MARK: - UITableViewDelegate
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -144,7 +103,7 @@ extension CategoryViewController {
         
         let listVC: ListViewController = ListViewController()
         
-        listVC.selectedCategory = categories[indexPath.row]
+        listVC.selectedCategory = self.dataManager.categories[indexPath.row]
         
         self.navigationController?.pushViewController(listVC, animated: true)
     }
@@ -152,7 +111,7 @@ extension CategoryViewController {
     // MARK: - UITableViewDataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return categories.count
+        return self.dataManager.categories.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -162,13 +121,31 @@ extension CategoryViewController {
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
             
-            content.text = categories[indexPath.row].name
+            content.text = self.dataManager.categories[indexPath.row].name
             
             cell.contentConfiguration = content
-            cell.backgroundColor = UIColor(hexString: categories[indexPath.row].colour ?? "FFCC00")
+            cell.backgroundColor = UIColor(hexString: self.dataManager.categories[indexPath.row].colour ?? "FFCC00")
         }
         
         return cell
+    }
+    
+    // MARK: - DataManagerDelegate
+    func delete(at indexPath: IndexPath) {
+        
+        guard let items: Array<NSManagedObject> = self.dataManager.categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
+        
+        /// 해당 카테고리의 모든 아이템 삭제
+        items.forEach { self.dataManager.coreDataManager.context.delete($0) }
+        
+        self.dataManager.coreDataManager.context.delete(self.dataManager.categories[indexPath.row])
+        self.dataManager.categories.remove(at: indexPath.row)
+        
+        self.dataManager.save {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        }
     }
 }
 
