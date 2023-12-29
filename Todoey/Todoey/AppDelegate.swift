@@ -6,12 +6,14 @@
 //
 
 import UIKit
+import CoreData
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 
+    
     // MARK: - Process Lifecycle
     /// 프로세스 레벨 수준의 이벤트를 애플리케이션에 알림.
     /// 따라서 시스템은 프로세스가 시작되거나 종료될 때 AppDelegate에 알림.
@@ -31,7 +33,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         /// App이 실행되고 초기 설정이 완료된 후 호출
         /// 이 시점에서 App이 화면에 나타나기 직전 단계
         print("AppDelegate: Process Lifecycle - didFinishLaunchingWithOptions")
-        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last ?? "")
+//        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last ?? "")
         
         return true
     }

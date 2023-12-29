@@ -10,6 +10,9 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
+    
+    // MARK: - Property
+    private let coreDataManager: CoreDataManager = CoreDataManager.shared
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -25,7 +28,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(frame: UIScreen().bounds)
         
         window?.windowScene = windowScene
-        window?.rootViewController = UINavigationController(rootViewController: ViewController())
+        window?.rootViewController = UINavigationController(rootViewController: CategoryViewController())
         window?.makeKeyAndVisible()
     }
 
@@ -77,6 +80,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         /// Scene이 Background로 전환될 때 호출
         
         print("SceneDelegate: UI Lifecycle - sceneDidEnterBackground")
+        
+        // Save changes in the application's managed object context when the application transitions to the background.
+        coreDataManager.saveContext()
     }
 
 
