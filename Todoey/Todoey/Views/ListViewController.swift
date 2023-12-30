@@ -17,7 +17,9 @@ final class ListViewController: SwipeTableViewController {
     var selectedCategory: Category? {
         didSet {
             loadItems {
-                self.tableView.reloadData()
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
             }
         }
     }
