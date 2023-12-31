@@ -187,10 +187,16 @@ extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
-        if (searchBar.text?.count == 0) {
+        if (searchBar.text?.count == nil) {
             loadItems {
                 DispatchQueue.main.async {
                     searchBar.resignFirstResponder()
+                }
+            }
+        } else {
+            loadItems {
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
                 }
             }
         }
