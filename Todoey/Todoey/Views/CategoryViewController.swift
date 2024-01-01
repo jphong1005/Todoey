@@ -7,17 +7,15 @@
 
 import UIKit
 import SwiftUI
-import CoreData
+import RealmSwift
 import SwipeCellKit
 import ChameleonFramework
 
 final class CategoryViewController: SwipeTableViewController {
-    
+
     // MARK: - Methods
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
@@ -26,7 +24,9 @@ final class CategoryViewController: SwipeTableViewController {
         
         configureCategoryViewController()
         self.dataManager.loadCategories {
-            self.tableView.reloadData()
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
         }
     }
     
@@ -66,16 +66,14 @@ final class CategoryViewController: SwipeTableViewController {
         let alert: UIAlertController = UIAlertController(title: "New Category", message: "Add New Todoey Category", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Add Category", style: .default, handler: { action in
-            let newCategory: Category = Category(context: self.dataManager.coreDataManager.context)
+            let newCategory: Category = Category()
             
             guard let text: String = textField?.text else { return }
             
             newCategory.name = text
             newCategory.colour = UIColor.randomFlat().hexValue()
             
-            self.dataManager.categories.append(newCategory)
-            
-            self.dataManager.save {
+            self.dataManager.save(category: newCategory) {
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -103,7 +101,7 @@ extension CategoryViewController: DataManagerDelegate {
         
         let listVC: ListViewController = ListViewController()
         
-        listVC.selectedCategory = self.dataManager.categories[indexPath.row]
+        listVC.selectedCategory = self.dataManager.categories?[indexPath.row]
         
         self.navigationController?.pushViewController(listVC, animated: true)
     }
@@ -111,7 +109,7 @@ extension CategoryViewController: DataManagerDelegate {
     // MARK: - UITableViewDataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return self.dataManager.categories.count
+        return self.dataManager.categories?.count ?? 0
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -121,10 +119,10 @@ extension CategoryViewController: DataManagerDelegate {
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
             
-            content.text = self.dataManager.categories[indexPath.row].name
+            content.text = self.dataManager.categories?[indexPath.row].name
             
             cell.contentConfiguration = content
-            cell.backgroundColor = UIColor(hexString: self.dataManager.categories[indexPath.row].colour ?? "FFCC00")
+            cell.backgroundColor = UIColor(hexString: self.dataManager.categories?[indexPath.row].colour ?? "FFCC00")
         }
         
         return cell
@@ -133,6 +131,7 @@ extension CategoryViewController: DataManagerDelegate {
     // MARK: - DataManagerDelegate
     func delete(at indexPath: IndexPath) {
         
+        /*
         guard let items: Array<NSManagedObject> = self.dataManager.categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
         
         /// 해당 카테고리의 모든 아이템 삭제
@@ -145,6 +144,21 @@ extension CategoryViewController: DataManagerDelegate {
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
+        }
+         */
+        
+        guard let category: Category = self.dataManager.categories?[indexPath.row] else { return }
+        
+        do {
+            try self.dataManager.realmManager.realm.write {
+                self.dataManager.realmManager.realm.delete(category)
+                
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
+        } catch {
+            print("(Delete) Error: \(error.localizedDescription)")
         }
     }
 }

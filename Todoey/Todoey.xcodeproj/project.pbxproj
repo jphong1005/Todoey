@@ -13,11 +13,12 @@
 		E8088E7C2B19B99300E5F7B9 /* ListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8088E7B2B19B99300E5F7B9 /* ListViewController.swift */; };
 		E8088E812B19B99400E5F7B9 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E8088E802B19B99400E5F7B9 /* Assets.xcassets */; };
 		E8088E842B19B99400E5F7B9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E8088E822B19B99400E5F7B9 /* LaunchScreen.storyboard */; };
+		E81A1A402B3EADA500FE1DF9 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A1A3F2B3EADA500FE1DF9 /* Category.swift */; };
+		E81A1A422B3EADB500FE1DF9 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81A1A412B3EADB500FE1DF9 /* Item.swift */; };
 		E82D32412B246580009A7F61 /* CategoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E82D32402B246580009A7F61 /* CategoryViewController.swift */; };
-		E82E84162B2088A8003F17F3 /* DataModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = E82E84142B2088A8003F17F3 /* DataModel.xcdatamodeld */; };
 		E86554AE2B3C286400E9ABC3 /* DataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86554AD2B3C286400E9ABC3 /* DataManager.swift */; };
 		E88194A22B298DAD00784349 /* SwipeTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E88194A12B298DAD00784349 /* SwipeTableViewController.swift */; };
-		E8A58A5D2B301E4400155B79 /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A58A5C2B301E4400155B79 /* CoreDataManager.swift */; };
+		E8A58A5D2B301E4400155B79 /* RealmManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A58A5C2B301E4400155B79 /* RealmManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,11 +31,12 @@
 		E8088E802B19B99400E5F7B9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E8088E832B19B99400E5F7B9 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		E8088E852B19B99400E5F7B9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E81A1A3F2B3EADA500FE1DF9 /* Category.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		E81A1A412B3EADB500FE1DF9 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		E82D32402B246580009A7F61 /* CategoryViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryViewController.swift; sourceTree = "<group>"; };
-		E82E84152B2088A8003F17F3 /* DataModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = DataModel.xcdatamodel; sourceTree = "<group>"; };
 		E86554AD2B3C286400E9ABC3 /* DataManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataManager.swift; sourceTree = "<group>"; };
 		E88194A12B298DAD00784349 /* SwipeTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeTableViewController.swift; sourceTree = "<group>"; };
-		E8A58A5C2B301E4400155B79 /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
+		E8A58A5C2B301E4400155B79 /* RealmManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealmManager.swift; sourceTree = "<group>"; };
 		FE9FCBCE164E76A3A9285262 /* Pods_Todoey.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Todoey.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -103,7 +105,8 @@
 		E82E84122B208828003F17F3 /* Model */ = {
 			isa = PBXGroup;
 			children = (
-				E82E84142B2088A8003F17F3 /* DataModel.xcdatamodeld */,
+				E81A1A3F2B3EADA500FE1DF9 /* Category.swift */,
+				E81A1A412B3EADB500FE1DF9 /* Item.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -121,7 +124,7 @@
 		E8A58A5B2B301E2900155B79 /* Manager */ = {
 			isa = PBXGroup;
 			children = (
-				E8A58A5C2B301E4400155B79 /* CoreDataManager.swift */,
+				E8A58A5C2B301E4400155B79 /* RealmManager.swift */,
 				E86554AD2B3C286400E9ABC3 /* DataManager.swift */,
 			);
 			path = Manager;
@@ -241,13 +244,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E81A1A422B3EADB500FE1DF9 /* Item.swift in Sources */,
 				E82D32412B246580009A7F61 /* CategoryViewController.swift in Sources */,
 				E86554AE2B3C286400E9ABC3 /* DataManager.swift in Sources */,
 				E8088E7C2B19B99300E5F7B9 /* ListViewController.swift in Sources */,
-				E82E84162B2088A8003F17F3 /* DataModel.xcdatamodeld in Sources */,
 				E8088E782B19B99300E5F7B9 /* AppDelegate.swift in Sources */,
+				E81A1A402B3EADA500FE1DF9 /* Category.swift in Sources */,
 				E88194A22B298DAD00784349 /* SwipeTableViewController.swift in Sources */,
-				E8A58A5D2B301E4400155B79 /* CoreDataManager.swift in Sources */,
+				E8A58A5D2B301E4400155B79 /* RealmManager.swift in Sources */,
 				E8088E7A2B19B99300E5F7B9 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -461,19 +465,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCVersionGroup section */
-		E82E84142B2088A8003F17F3 /* DataModel.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				E82E84152B2088A8003F17F3 /* DataModel.xcdatamodel */,
-			);
-			currentVersion = E82E84152B2088A8003F17F3 /* DataModel.xcdatamodel */;
-			path = DataModel.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
 	};
 	rootObject = E8088E6C2B19B99300E5F7B9 /* Project object */;
 }

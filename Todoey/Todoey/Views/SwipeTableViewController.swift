@@ -8,7 +8,6 @@
 import UIKit
 import SwiftUI
 import SwipeCellKit
-import CoreData
 
 class SwipeTableViewController: UITableViewController {
     
@@ -16,7 +15,7 @@ class SwipeTableViewController: UITableViewController {
     static let swipeTableViewCell_Identifier: String = "SwipeTableViewCell"
     
     /// `Dependency Injection`
-    let dataManager: DataManager = DataManager(coreDataManager: CoreDataManager.shared)
+    let dataManager: DataManager = DataManager(realmManager: RealmManager.shared)
     weak var delegate: DataManagerDelegate? = nil
     
     // MARK: - Method

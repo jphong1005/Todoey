@@ -6,20 +6,21 @@
 //
 
 import Foundation
-import CoreData
+import RealmSwift
 
 @objc protocol DataManagerDelegate: AnyObject {
     
     // MARK: - Function Prototypes
     /// `CREATE`
-    @objc optional func save(completionHandler: @escaping () -> Void) -> Void
+    @objc optional func save(category: Category, completionHandler: @escaping () -> Void) -> Void
+    @objc optional func save(item: Item, completionHandler: @escaping () -> Void) -> Void
     
     /// `READ`
-    @objc optional func loadCategories(_ request: NSFetchRequest<Category>, completionHandler: @escaping () -> Void) -> Void
-    @objc optional func loadItems(_ request: NSFetchRequest<Item>, _ predicate: NSPredicate?, completionHandler: @escaping () -> Void) -> Void
+    @objc optional func loadCategories(completionHandler: @escaping () -> Void) -> Void
+    @objc optional func loadItems(completionHandler: @escaping () -> Void) -> Void
     
     /// `UPDATE`
-    @objc optional func update(_ data: Array<Item>, at indexPath: IndexPath, completionHandler: @escaping () -> Void) -> Void
+    @objc optional func update(data: Item, completionHandler: @escaping () -> Void) -> Void
     
     /// `DELETE`
     @objc optional func delete(at indexPath: IndexPath) -> Void
@@ -29,39 +30,59 @@ import CoreData
 final class DataManager: DataManagerDelegate {
     
     // MARK: - Properties
-    let coreDataManager: CoreDataManagerDelegate
+    let realmManager: RealmManagerDelegate
     
-    var categories: Array<Category> = Array<Category>()
-    var items: Array<Item> = Array<Item>()
+    var categories: Results<Category>?
+    var items: Results<Item>?
     
     // MARK: - Init (For Dependency Injection)
-    init(coreDataManager: CoreDataManagerDelegate) {
-        self.coreDataManager = coreDataManager
+    init(realmManager: RealmManagerDelegate) {
+        self.realmManager = realmManager
     }
     
-    // MARK: - Data Manipulation Methods -> Function Implementation
-    func save(completionHandler: @escaping () -> Void) {
-        
-        coreDataManager.saveContext()
-        
-        completionHandler()
-    }
-    
-    func loadCategories(_ request: NSFetchRequest<Category> = Category.fetchRequest(), completionHandler: @escaping () -> Void) {
+    func save(category: Category, completionHandler: @escaping () -> Void) {
         
         do {
-            categories = try coreDataManager.context.fetch(request)
+            try realmManager.realm.write {
+                realmManager.realm.add(category)
+                
+                completionHandler()
+            }
         } catch {
-            print("Error fetching data from context: \(error.localizedDescription)")
+            print("Error saving category: \(error.localizedDescription)")
         }
+    }
+    
+    func save(item: Item, completionHandler: @escaping () -> Void) {
+        
+        do {
+            try realmManager.realm.write {
+                realmManager.realm.add(item)
+                
+                completionHandler()
+            }
+        } catch {
+            print("Error saving item: \(error.localizedDescription)")
+        }
+    }
+    
+    func loadCategories(completionHandler: @escaping () -> Void) {
+        
+        categories = realmManager.realm.objects(Category.self)
         
         completionHandler()
     }
     
-    func update(_ data: Array<Item>, at indexPath: IndexPath, completionHandler: @escaping () -> Void) {
+    func update(data: Item, completionHandler: @escaping () -> Void) {
         
-        items[indexPath.row].done = !items[indexPath.row].done
-        
-        completionHandler()
+        do {
+            try realmManager.realm.write {
+                data.done = !data.done
+                
+                completionHandler()
+            }
+        } catch {
+            print("Error updating item: \(error.localizedDescription)")
+        }
     }
 }

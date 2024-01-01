@@ -6,13 +6,14 @@
 //
 
 import UIKit
+import RealmSwift
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
     
     // MARK: - Property
-    private let coreDataManager: CoreDataManager = CoreDataManager.shared
+    private let realmManager: RealmManager = RealmManager.shared
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -21,6 +22,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         // This delegate does not imply the connecting scene or session are new (see `application:configurationForConnectingSceneSession` instead).
         
         print("(scene) willConnectToSession")
+        
+        /// Initialization Realm
+        realmManager.realm
+        
+        /// Realm File Path
+        print("Path: \(realmManager.realmFilePath)")
         
         guard let windowScene: UIWindowScene = (scene as? UIWindowScene) else { return }
         
@@ -82,7 +89,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         print("SceneDelegate: UI Lifecycle - sceneDidEnterBackground")
         
         // Save changes in the application's managed object context when the application transitions to the background.
-        coreDataManager.saveContext()
     }
 
 

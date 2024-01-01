@@ -7,7 +7,7 @@
 
 import UIKit
 import SwiftUI
-import CoreData
+import RealmSwift
 import SwipeCellKit
 import ChameleonFramework
 
@@ -17,7 +17,9 @@ final class ListViewController: SwipeTableViewController {
     var selectedCategory: Category? {
         didSet {
             loadItems {
-                self.tableView.reloadData()
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
             }
         }
     }
@@ -82,17 +84,17 @@ final class ListViewController: SwipeTableViewController {
         let alert: UIAlertController = UIAlertController(title: "New Item", message: "Add New Todoey Item", preferredStyle: .alert)
         
         alert.addAction(UIAlertAction(title: "Add Item", style: .default, handler: { action in
-            let newItem: Item = Item(context: self.dataManager.coreDataManager.context)
+            guard let currentCategory: Category = self.selectedCategory, let text: String = textField?.text else { return }
             
-            guard let text: String = textField?.text else { return }
+            let newItem: Item = Item()
             
             newItem.title = text
             newItem.done = false
-            newItem.parentCategory = self.selectedCategory
+            newItem.dateCreated = Date()
             
-            self.dataManager.items.append(newItem)
+            currentCategory.items.append(newItem)
             
-            self.dataManager.save {
+            self.dataManager.save(item: newItem) {
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -119,11 +121,11 @@ extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
         
         tableView.deselectRow(at: indexPath, animated: true)
         
-        self.dataManager.update(self.dataManager.items, at: indexPath) {
-            self.dataManager.save {
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
+        guard let selectedItem: Item = self.dataManager.items?[indexPath.row] else { return }
+        
+        self.dataManager.update(data: selectedItem) {
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
             }
         }
     }
@@ -131,7 +133,7 @@ extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
     // MARK: - UITableViewDataSource
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         
-        return self.dataManager.items.count
+        return self.dataManager.items?.count ?? 0
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -140,14 +142,15 @@ extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
         
         if #available(iOS 14.0, *) {
             var content: UIListContentConfiguration = cell.defaultContentConfiguration()
-            guard let colour: UIColor = UIColor(hexString: selectedCategory?.colour ?? "FFCC00")?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(self.dataManager.items.count)) else { return cell }
+            guard let colour: UIColor = UIColor(hexString: selectedCategory?.colour ?? "FFCC00")?.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(self.dataManager.items?.count ?? 0)) else { return cell }
             
-            content.text = self.dataManager.items[indexPath.row].title
+            content.text = self.dataManager.items?[indexPath.row].title
             content.textProperties.color = ContrastColorOf(colour, returnFlat: true)
             
             cell.backgroundColor = colour
             cell.contentConfiguration = content
-            cell.accessoryType = self.dataManager.items[indexPath.row].done ? .checkmark : .none
+            cell.accessoryType = (self.dataManager.items?[indexPath.row].done == true) ? .checkmark : .none
+
         }
         
         return cell
@@ -167,62 +170,68 @@ extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
         
         guard let searchBarText: String = searchBar.text else { return }
         
-        /// Request
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        self.dataManager.items = self.dataManager.items?.filter("title CONTAINS[cd] %@", searchBarText).sorted(byKeyPath: "dateCreated", ascending: true)
         
-        /// Predicate
-        let predicate: NSPredicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBarText)
-        
-        /// Sorting
-        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        
-        loadItems(request, predicate) {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
         }
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         
-        if (searchBar.text?.count == 0) {
+        if (searchBar.text?.count == nil) {
             loadItems {
                 DispatchQueue.main.async {
                     searchBar.resignFirstResponder()
+                }
+            }
+        } else {
+            loadItems {
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
                 }
             }
         }
     }
     
     // MARK: - DataManagerDelegate
-    func loadItems(_ request: NSFetchRequest<Item> = Item.fetchRequest(), _ predicate: NSPredicate? = nil, completionHandler: @escaping () -> Void) {
+    func loadItems(completionHandler: @escaping () -> Void) {
         
-        let categoryPredicate: NSPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory?.name ?? "")
-        
-        if let additionalPredicate: NSPredicate = predicate {
-            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
-        } else {
-            request.predicate = categoryPredicate
-        }
-        
-        do {
-            self.dataManager.items = try self.dataManager.coreDataManager.context.fetch(request)
-        } catch {
-            print("Error fetching data from context: \(error.localizedDescription)")
-        }
+        self.dataManager.items = self.dataManager.realmManager.realm.objects(Item.self)
         
         completionHandler()
     }
     
-    func delete(at indexPath: IndexPath) -> Void {
+    func delete(at indexPath: IndexPath) {
         
-        self.dataManager.coreDataManager.context.delete(self.dataManager.items[indexPath.row])
-        self.dataManager.items.remove(at: indexPath.row)
+        /*
+        guard let items: Array<NSManagedObject> = self.dataManager.categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
+        
+        /// 해당 카테고리의 모든 아이템 삭제
+        items.forEach { self.dataManager.coreDataManager.context.delete($0) }
+        
+        self.dataManager.coreDataManager.context.delete(self.dataManager.categories[indexPath.row])
+        self.dataManager.categories.remove(at: indexPath.row)
         
         self.dataManager.save {
             DispatchQueue.main.async {
                 self.tableView.reloadData()
             }
+        }
+         */
+        
+        guard let item: Item = self.dataManager.items?[indexPath.row] else { return }
+        
+        do {
+            try self.dataManager.realmManager.realm.write {
+                self.dataManager.realmManager.realm.delete(item)
+                
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
+        } catch {
+            print("An error occurred while deleting the item: \(error.localizedDescription)")
         }
     }
     

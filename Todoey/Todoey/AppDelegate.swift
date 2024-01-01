@@ -6,14 +6,12 @@
 //
 
 import UIKit
-import CoreData
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 
-    
     // MARK: - Process Lifecycle
     /// 프로세스 레벨 수준의 이벤트를 애플리케이션에 알림.
     /// 따라서 시스템은 프로세스가 시작되거나 종료될 때 AppDelegate에 알림.
