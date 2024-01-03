@@ -27,7 +27,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         realmManager.realm
         
         /// Realm File Path
-        print("Path: \(realmManager.realmFilePath)")
+        print(realmManager.realmFilePath)
         
         guard let windowScene: UIWindowScene = (scene as? UIWindowScene) else { return }
         

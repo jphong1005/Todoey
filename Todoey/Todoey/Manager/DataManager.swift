@@ -12,8 +12,7 @@ import RealmSwift
     
     // MARK: - Function Prototypes
     /// `CREATE`
-    @objc optional func save(category: Category, completionHandler: @escaping () -> Void) -> Void
-    @objc optional func save(item: Item, completionHandler: @escaping () -> Void) -> Void
+    @objc optional func save(data: Any, completionHandler: @escaping () -> Void) -> Void
     
     /// `READ`
     @objc optional func loadCategories(completionHandler: @escaping () -> Void) -> Void
@@ -32,7 +31,7 @@ final class DataManager: DataManagerDelegate {
     // MARK: - Properties
     let realmManager: RealmManagerDelegate
     
-    var categories: Results<Category>?
+    var categories: Results<Category>?  //  Results -> Auto-updating container
     var items: Results<Item>?
     
     // MARK: - Init (For Dependency Injection)
@@ -40,29 +39,32 @@ final class DataManager: DataManagerDelegate {
         self.realmManager = realmManager
     }
     
-    func save(category: Category, completionHandler: @escaping () -> Void) {
+    // MARK: - Data Manipulation Methods -> Function Implementation
+    func save(data: Any, completionHandler: @escaping () -> Void) {
         
-        do {
-            try realmManager.realm.write {
-                realmManager.realm.add(category)
-                
-                completionHandler()
+        if let category: Category = data as? Category {
+            do {
+                try realmManager.realm.write {
+                    realmManager.realm.add(category)
+                    
+                    completionHandler()
+                }
+            } catch {
+                print("Error saving category: \(error.localizedDescription)")
             }
-        } catch {
-            print("Error saving category: \(error.localizedDescription)")
-        }
-    }
-    
-    func save(item: Item, completionHandler: @escaping () -> Void) {
-        
-        do {
-            try realmManager.realm.write {
-                realmManager.realm.add(item)
-                
-                completionHandler()
+        } else if let item: Item = data as? Item {
+            do {
+                try realmManager.realm.write {
+                    realmManager.realm.add(item)
+                    
+                    completionHandler()
+                }
+            } catch {
+                print("Error saving item: \(error.localizedDescription)")
             }
-        } catch {
-            print("Error saving item: \(error.localizedDescription)")
+        } 
+        else {
+            print("Invalid Data")
         }
     }
     

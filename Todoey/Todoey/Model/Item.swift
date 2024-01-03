@@ -15,6 +15,9 @@ class Item: Object {
     /*
     @objc dynamic var title: String = ""
     @objc dynamic var done: Bool = false
+    @objc dynamic var dateCreated: Date?
+    
+    var parentCategory: LinkingObjects<Category> = LinkingObjects(fromType: Category.self, property: "items")
      */
     
     /// `Later`
@@ -22,5 +25,5 @@ class Item: Object {
     @Persisted var done: Bool = false
     @Persisted var dateCreated: Date?
     
-    var parentCategory: LinkingObjects<Category> = LinkingObjects(fromType: Category.self, property: "items")   //  Relationship
+    var parentCategory: LinkingObjects<Category> = LinkingObjects(fromType: Category.self, property: "items")   //  Relationship (-> Category와 역참조 관계)
 }

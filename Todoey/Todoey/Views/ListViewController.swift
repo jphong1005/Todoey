@@ -92,9 +92,9 @@ final class ListViewController: SwipeTableViewController {
             newItem.done = false
             newItem.dateCreated = Date()
             
-            currentCategory.items.append(newItem)
-            
-            self.dataManager.save(item: newItem) {
+            self.dataManager.save(data: newItem) {
+                currentCategory.items.append(newItem)
+                
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -197,28 +197,12 @@ extension ListViewController: UISearchBarDelegate, DataManagerDelegate {
     // MARK: - DataManagerDelegate
     func loadItems(completionHandler: @escaping () -> Void) {
         
-        self.dataManager.items = self.dataManager.realmManager.realm.objects(Item.self)
+        self.dataManager.items = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
         
         completionHandler()
     }
     
     func delete(at indexPath: IndexPath) {
-        
-        /*
-        guard let items: Array<NSManagedObject> = self.dataManager.categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
-        
-        /// 해당 카테고리의 모든 아이템 삭제
-        items.forEach { self.dataManager.coreDataManager.context.delete($0) }
-        
-        self.dataManager.coreDataManager.context.delete(self.dataManager.categories[indexPath.row])
-        self.dataManager.categories.remove(at: indexPath.row)
-        
-        self.dataManager.save {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-         */
         
         guard let item: Item = self.dataManager.items?[indexPath.row] else { return }
         

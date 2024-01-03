@@ -73,7 +73,7 @@ final class CategoryViewController: SwipeTableViewController {
             newCategory.name = text
             newCategory.colour = UIColor.randomFlat().hexValue()
             
-            self.dataManager.save(category: newCategory) {
+            self.dataManager.save(data: newCategory) {
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
@@ -131,26 +131,15 @@ extension CategoryViewController: DataManagerDelegate {
     // MARK: - DataManagerDelegate
     func delete(at indexPath: IndexPath) {
         
-        /*
-        guard let items: Array<NSManagedObject> = self.dataManager.categories[indexPath.row].items?.compactMap({ $0 as? NSManagedObject }) else { return }
-        
-        /// 해당 카테고리의 모든 아이템 삭제
-        items.forEach { self.dataManager.coreDataManager.context.delete($0) }
-        
-        self.dataManager.coreDataManager.context.delete(self.dataManager.categories[indexPath.row])
-        self.dataManager.categories.remove(at: indexPath.row)
-        
-        self.dataManager.save {
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-            }
-        }
-         */
-        
-        guard let category: Category = self.dataManager.categories?[indexPath.row] else { return }
+        guard let category: Category = self.dataManager.categories?[indexPath.row], 
+        let items = self.dataManager.categories?[indexPath.row].items else { return }
         
         do {
             try self.dataManager.realmManager.realm.write {
+                /// 해당 카테고리의 모든 아이템 삭제
+                items.forEach { self.dataManager.realmManager.realm.delete($0) }
+                
+                /// 해당 카테고리 삭제
                 self.dataManager.realmManager.realm.delete(category)
                 
                 DispatchQueue.main.async {
@@ -158,7 +147,7 @@ extension CategoryViewController: DataManagerDelegate {
                 }
             }
         } catch {
-            print("(Delete) Error: \(error.localizedDescription)")
+            print("An error occurred while deleting the category: \(error.localizedDescription)")
         }
     }
 }
