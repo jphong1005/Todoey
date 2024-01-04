@@ -26,7 +26,9 @@ final class CategoryViewController: SwipeTableViewController {
         
         configureCategoryViewController()
         self.dataManager.loadCategories {
-            self.tableView.reloadData()
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
         }
     }
     
