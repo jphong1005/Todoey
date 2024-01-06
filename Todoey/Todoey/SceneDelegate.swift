@@ -30,6 +30,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.windowScene = windowScene
         window?.rootViewController = UINavigationController(rootViewController: CategoryViewController())
         window?.makeKeyAndVisible()
+        
+        /// SQLite File Path
+        print("SQLite File Path: \(coreDataManager.persistentContainer.persistentStoreCoordinator.persistentStores.first!.url!.path(percentEncoded: false))")
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {

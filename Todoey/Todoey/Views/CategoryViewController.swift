@@ -17,7 +17,7 @@ final class CategoryViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
+//        print("Path: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))")
         
         self.tableView.delegate = self
         self.tableView.dataSource = self
